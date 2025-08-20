@@ -1,4 +1,4 @@
-import router from './src/routes/index';
+import router from './routes/index';
 import express, {Application} from 'express';
 
 
@@ -16,7 +16,7 @@ app.listen(PORT, (error?:any) => {
     }
 
     else{
-        console.log("Error occurred, error");
+        console.log("Error occurred", error);
     }
 });
 
