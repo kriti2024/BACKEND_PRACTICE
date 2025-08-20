@@ -1,8 +1,12 @@
 
-// const pg = require('pg');
-import pg from 'pg';
-const conString = "postgres://postgres:kriti123@localhost:5432/practice";
+import pkg from 'pg';
+const { Client } = pkg;
 
-const client = new pg.Client(conString);
-client.connect();
+const client = new Client({
+  connectionString: "postgres://postgres:kriti123@localhost:5432/practice"
+});
+
+client.connect()
+    .then(() => console.log("Postgres connected"))
+    .catch(err => console.log("Postgres connection error:", err));
 export default client;
