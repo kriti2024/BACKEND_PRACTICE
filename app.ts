@@ -1,20 +1,22 @@
-import router from './src/routes/index.js';
-import express from 'express';
+import router from './src/routes/index';
+import express, {Application} from 'express';
 
 
-const app = express();
+const app: Application = express();
 app.use(express.json());
 
-const PORT = 3000;
+const PORT: number = 3000;
 
-app.use("/api", router)
+app.use("/api", router);
 
 
-app.listen(PORT, (error) => {
-    if(!error)
-        console.log("Server is working successfully" +PORT)
+app.listen(PORT, (error?:any) => {
+    if(!error) {
+        console.log("Server is working successfully" +PORT);
+    }
 
-    else
+    else{
         console.log("Error occurred, error");
-})
+    }
+});
 
