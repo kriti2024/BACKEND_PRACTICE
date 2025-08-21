@@ -7,6 +7,10 @@ interface User {
     address: string;
     contact: string;
     email: string;
+    dob: string;
+    password: string;
+    role: "admin" | "customer";
+    gender: "male" | "female";
 }
 
 export const getAllUsers = async(req:Request, res:Response)=> {
@@ -28,11 +32,11 @@ export const getAllUsers = async(req:Request, res:Response)=> {
 
 export const createUser = async(req:Request, res:Response) => {
     try{
-        const {username, address, contact, email} = req.body;
+        const {username, address, contact, email, dob, password, role, gender } = req.body;
 
         const {rows} = await client.query(
-            'INSERT INTO userdetails (username, address, contact, email) VALUES($1, $2, $3, $4)  RETURNING *', 
-            [username, address, contact, email]);
+            'INSERT INTO userdetails (username, address, contact, email, dob, password, role, gender ) VALUES($1, $2, $3, $4, $5, $6, $7, $8)  RETURNING *', 
+            [username, address, contact, email, dob, password, role, gender ]);
 
         return res.status(201).json({
             msg:" user added successfully", 
@@ -49,7 +53,7 @@ export const createUser = async(req:Request, res:Response) => {
 export const updateUser = async(req:Request, res:Response) => {
     try{
         const {id} = req.params;
-        const {username, address, contact, email} = req.body;
+        const {username, address, contact, email, dob, password, role, gender } = req.body;
 
         const userExist = await client.query("SELECT * FROM  userdetails WHERE id=$1", [id])
         if(userExist?.rows?.length<1){
@@ -59,8 +63,8 @@ export const updateUser = async(req:Request, res:Response) => {
         }
 
         const {rows} = await client.query(
-            'UPDATE userdetails SET username=$1, address=$2, contact=$3, email=$4 WHERE id=$5 RETURNING *', 
-            [username, address, contact, email, id]);
+            'UPDATE userdetails SET username=$1, address=$2, contact=$3, email=$4, dob=$5, password=$6, role=$7, gender=$8  WHERE id=$5 RETURNING *', 
+            [username, address, contact, email, id, dob, password, role, gender ]);
 
         return res.status(200).json({
             msg: "User updated successfully", 
