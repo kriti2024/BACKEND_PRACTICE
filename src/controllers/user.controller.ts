@@ -15,13 +15,19 @@ interface User {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const { page = 1, perPage = 10 } = req.query;
+    const { page = 1, perPage = 10, search = "" } = req.query;
     let dbQuery = "SELECT * FROM userdetails";
+    const values = [];
+
+    if (search) {
+      dbQuery += " WHERE username ILIKE $1 OR email ILIKE $1";
+      values.push(`%${search}%`);
+    }
 
     const offset = page ? (Number(page) - 1) * Number(perPage) : 0;
     dbQuery += ` LIMIT ${perPage} OFFSET ${offset}`;
 
-    const { rows, rowCount } = await client.query(dbQuery);
+    const { rows, rowCount } = await client.query(dbQuery, values);
 
     return res.status(200).json({
       msg: "User fetched successfully",
