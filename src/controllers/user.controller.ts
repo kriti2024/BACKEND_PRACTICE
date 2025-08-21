@@ -1,5 +1,6 @@
 import client from "../config/db.config";
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
 
 interface User {
   id: number;
@@ -12,6 +13,12 @@ interface User {
   role: "admin" | "customer";
   gender: "male" | "female";
 }
+
+const hashPassword = async (plainPassword: string) => {
+  const saltRounds = 10;
+  const hashedPassword = await bcrypt.hash(plainPassword, saltRounds);
+  return hashedPassword;
+};
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -56,10 +63,11 @@ export const createUser = async (req: Request, res: Response) => {
         msg: "Email already exists",
       });
     }
+    const hashedPassword = await hashPassword(password);
 
     const { rows } = await client.query(
       "INSERT INTO userdetails (username, address, contact, email, dob, password, role, gender ) VALUES($1, $2, $3, $4, $5, $6, $7, $8)  RETURNING *",
-      [username, address, contact, email, dob, password, role, gender]
+      [username, address, contact, email, dob, hashedPassword, role, gender]
     );
 
     return res.status(201).json({
@@ -89,7 +97,13 @@ export const updateUser = async (req: Request, res: Response) => {
         msg: "User not found",
       });
     }
-
+    let passwordToStore;
+      if (password) {
+        passwordToStore = await hashPassword(password);
+      } else {
+        passwordToStore = userExist.rows[0].password;
+      }
+      
     const emailExist = await client.query(
       "SELECT * FROM userdetails WHERE email=$1 AND id<>$2",
       [email, id]
@@ -102,7 +116,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     const { rows } = await client.query(
       "UPDATE userdetails SET username=$1, address=$2, contact=$3, email=$4, dob=$5, password=$6, role=$7, gender=$8  WHERE id=$9 RETURNING *",
-      [username, address, contact, email, dob, password, role, gender, id]
+      [username, address, contact, email, dob, passwordToStore, role, gender, id]
     );
 
     return res.status(200).json({
