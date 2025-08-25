@@ -1,11 +1,14 @@
 import { Router } from "express";
 import { createUser, getAllUsers, updateUser, deleteUser } from "../controllers/user.controller";
+import { authenticate, authorize } from "../middleware/auth.middleware";
 
-const userRouter = Router()
+const userRouter = Router();
+
+userRouter.use(authenticate);
 
 userRouter.get("/" ,getAllUsers);
-userRouter.post("/", createUser);
-userRouter.put("/:id", updateUser);
-userRouter.delete("/:id", deleteUser);
+userRouter.post("/", authorize(["admin"]), createUser);
+userRouter.put("/:id", authorize(["admin"]), updateUser);
+userRouter.delete("/:id", authorize(["admin"]), deleteUser);
 
 export default userRouter;
