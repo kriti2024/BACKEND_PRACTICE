@@ -25,14 +25,26 @@ export const getAllUsers = async (req: Request, res: Response) => {
     const { page = 1, perPage = 10, search = "" } = req.query;
     let dbQuery = "SELECT * FROM userdetails";
     const values = [];
+    let counter = 1;
 
     if (search) {
-      dbQuery += " WHERE username ILIKE $1 OR email ILIKE $1";
+      dbQuery += ` WHERE username ILIKE $${counter} OR email ILIKE $${counter}`;
+      counter++;
       values.push(`%${search}%`);
     }
 
-    const offset = page ? (Number(page) - 1) * Number(perPage) : 0;
-    dbQuery += ` LIMIT ${perPage} OFFSET ${offset}`;
+    if (perPage) {
+      dbQuery += ` LIMIT $${counter}`;
+      counter++;
+      values.push(perPage);
+    }
+
+    if (page) {
+      const offset = page ? (Number(page) - 1) * Number(perPage) : 0;
+      dbQuery += ` OFFSET $${counter}`;
+      counter++;
+      values.push(offset);
+    }
 
     const { rows, rowCount } = await client.query(dbQuery, values);
 
@@ -43,7 +55,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     });
   } catch (err) {
     return res.status(500).json({
-      msg: "Error is fetching users",
+      msg: "Error while fetching users",
       error: err,
     });
   }
@@ -98,12 +110,12 @@ export const updateUser = async (req: Request, res: Response) => {
       });
     }
     let passwordToStore;
-      if (password) {
-        passwordToStore = await hashPassword(password);
-      } else {
-        passwordToStore = userExist.rows[0].password;
-      }
-      
+    if (password) {
+      passwordToStore = await hashPassword(password);
+    } else {
+      passwordToStore = userExist.rows[0].password;
+    }
+
     const emailExist = await client.query(
       "SELECT * FROM userdetails WHERE email=$1 AND id<>$2",
       [email, id]
@@ -116,7 +128,17 @@ export const updateUser = async (req: Request, res: Response) => {
 
     const { rows } = await client.query(
       "UPDATE userdetails SET username=$1, address=$2, contact=$3, email=$4, dob=$5, password=$6, role=$7, gender=$8  WHERE id=$9 RETURNING *",
-      [username, address, contact, email, dob, passwordToStore, role, gender, id]
+      [
+        username,
+        address,
+        contact,
+        email,
+        dob,
+        passwordToStore,
+        role,
+        gender,
+        id,
+      ]
     );
 
     return res.status(200).json({
