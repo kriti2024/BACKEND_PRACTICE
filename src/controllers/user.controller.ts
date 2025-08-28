@@ -10,7 +10,7 @@ interface User {
   email: string;
   dob: string;
   password: string;
-  role: "admin" | "customer";
+  role: "admin" | "customer" | "product owner";
   gender: "male" | "female";
 }
 

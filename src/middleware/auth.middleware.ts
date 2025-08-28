@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload as DefaultJwtPayload } from "jsonwebtoken";
 
-interface JwtPayload {
+interface JwtPayload extends DefaultJwtPayload {
   id: number;
   role: string;
   email: string;
@@ -17,17 +17,19 @@ export const authenticate = (
 ) => {
   try {
     const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
 
-    if (!token) {
-      return res.status(401).json({ msg: "No token provided." });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ msg: "Authorization header missing" });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const token = authHeader.split(" ")[1];
 
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     (req as any).user = decoded;
-    next();
-  } catch (err) {
+
+    return next();
+  } catch (err: any) {
+    console.error("Auth error:", err.message);
     return res.status(403).json({ msg: "Invalid or expired token" });
   }
 };
@@ -46,6 +48,6 @@ export const authorize = (roles: string[]) => {
         .json({ msg: "Forbidden: insufficient permissions" });
     }
 
-    next();
+    return next();
   };
 };
