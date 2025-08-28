@@ -25,18 +25,40 @@ export const createProduct = async (req: Request, res: Response) => {
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    let query =
+    const { page = 1, perPage = 10 } = req.query;
+
+    let dbQuery =
       "SELECT products.id, products.name, products.description, products.price, userdetails.username, userdetails.email, userdetails.role FROM products JOIN userdetails ON products.user_id = userdetails.id";
-    let params = [];
+
+    const values = [];
+    let counter = 1;
 
     if (user.role === "product owner") {
-      query += " WHERE user_id = $1 ";
-      params = [user.id];
+      dbQuery += `WHERE user_id = $${counter}`;
+      values.push(user.id);
+      counter++;
     }
 
-    const { rows } = await client.query(query, params);
+    if (perPage) {
+      dbQuery += ` LIMIT $${counter}`;
+      counter++;
+      values.push(Number(perPage));
+    }
+
+    if (page) {
+      const offset = page ? (Number(page) - 1) * Number(perPage) : 0;
+      dbQuery += ` OFFSET $${counter}`;
+      values.push(offset);
+      counter++;
+    }
+
+    const { rows, rowCount } = await client.query(dbQuery, values);
     return res.status(200).json({
+      msg: "All product fetched",
       products: rows,
+      totalCount: rowCount,
+      currentPage: Number(page),
+      perPage: Number(perPage),
     });
   } catch (err) {
     return res.status(500).json({
