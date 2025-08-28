@@ -36,14 +36,14 @@ export const getAllUsers = async (req: Request, res: Response) => {
     if (perPage) {
       dbQuery += ` LIMIT $${counter}`;
       counter++;
-      values.push(perPage);
+      values.push(Number(perPage));
     }
 
     if (page) {
       const offset = page ? (Number(page) - 1) * Number(perPage) : 0;
       dbQuery += ` OFFSET $${counter}`;
-      counter++;
       values.push(offset);
+      counter++;
     }
 
     const { rows, rowCount } = await client.query(dbQuery, values);
@@ -52,6 +52,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
       msg: "User fetched successfully",
       user: rows,
       totalCount: rowCount,
+      currentPage: Number(page),
+      perPage: Number(perPage)
     });
   } catch (err) {
     return res.status(500).json({
